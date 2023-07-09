@@ -83,6 +83,9 @@
                             </p>
                         </div>
                     </form>
+                    <div v-show="errorMessage!=''" class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300" role="alert">
+                        <span class="font-medium">Erro</span> {{ errorMessage }}
+                      </div>
                 </div>
             </main>
         </div>
@@ -92,9 +95,12 @@
 import { ref } from "vue";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '@/services/firebase.service';
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const email = ref('');
-const password = ref('');
+const password = ref(''); 
+const errorMessage = ref('');
 
 
 function handleLogin() {
@@ -103,11 +109,16 @@ function handleLogin() {
         .then((userCredential) => {
             // Signed in 
             const user = userCredential.user;
-            // ...
+            if (user) {
+                console.log(user)
+                errorMessage.value = ''
+                router.push('/dashboard')
+            }
         })
         .catch((error) => {
             const errorCode = error.code;
-            const errorMessage = error.message;
+            errorMessage.value = error.message;
+            console.error(errorCode, errorMessage.value)
         });
 }
 </script>
