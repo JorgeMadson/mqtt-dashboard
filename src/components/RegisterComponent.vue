@@ -50,13 +50,13 @@
                         </p>
                     </div>
 
-                    <form action="#" class="mt-8 grid grid-cols-6 gap-6">
+                    <form action.prevent="handleCreateUser" class="mt-8 grid grid-cols-6 gap-6">
                         <div class="col-span-12 sm:col-span-6">
                             <label for="FirstName" class="block text-sm font-medium text-gray-700">
                                 Nome completo
                             </label>
 
-                            <input type="text" id="FirstName" name="first_name"
+                            <input type="text" id="FirstName" name="name" v-model="name"
                                 class="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm" />
                         </div>
 
@@ -65,7 +65,7 @@
                                 Email
                             </label>
 
-                            <input type="email" id="Email" name="email"
+                            <input type="email" id="Email" name="email" v-model="email"
                                 class="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm" />
                         </div>
 
@@ -74,7 +74,7 @@
                                 Password
                             </label>
 
-                            <input type="password" id="Password" name="password"
+                            <input type="password" id="Password" name="password" v-model="password"
                                 class="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm" />
                         </div>
 
@@ -83,13 +83,13 @@
                                 Password Confirmation
                             </label>
 
-                            <input type="password" id="PasswordConfirmation" name="password_confirmation"
+                            <input type="password" id="PasswordConfirmation" name="password_confirmation" v-model="password_confirmation"
                                 class="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm" />
                         </div>
 
                         <div class="col-span-6">
                             <label for="MarketingAccept" class="flex gap-4">
-                                <input type="checkbox" id="MarketingAccept" name="marketing_accept"
+                                <input type="checkbox" id="MarketingAccept" name="marketing_accept" v-model="receiveEmail"
                                     class="h-5 w-5 rounded-md border-gray-200 bg-white shadow-sm" />
 
                                 <span class="text-sm text-gray-700">
@@ -111,7 +111,7 @@
                         </div>
 
                         <div class="col-span-6 sm:flex sm:items-center sm:gap-4">
-                            <button
+                            <button @click.prevent="handleCreateUser" type="submit"
                                 class="inline-block shrink-0 rounded-md border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500">
                                 Create an account
                             </button>
@@ -122,8 +122,53 @@
                             </p>
                         </div>
                     </form>
+                    <div v-show="errorMessage!=''" class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300" role="alert">
+                        <span class="font-medium">Erro</span> {{ errorMessage }}
+                      </div>
                 </div>
             </main>
         </div>
     </section>
 </template>
+<script setup lang="ts">
+import { ref } from "vue";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from '@/services/firebase.service';
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const name = ref('');
+const email = ref('');
+const password = ref('');
+const password_confirmation = ref('');
+const errorMessage = ref('');
+const receiveEmail = ref(false);
+
+function handleCreateUser() {
+    if (password.value !== password_confirmation.value) {
+        errorMessage.value = 'As senhas não conferem'
+        return
+    }
+
+    if (name.value.length < 6) {
+        errorMessage.value = 'O nome deve ter no mínimo 6 caracteres'
+        return
+    }
+    console.log(auth)
+    createUserWithEmailAndPassword(auth, email.value, password.value)
+        .then((userCredential) => {
+            // Signed in 
+            const user = userCredential.user;
+            if (user) {
+                console.log(user)
+                errorMessage.value = ''
+                router.push('/dashboard')
+            }
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            errorMessage.value = error.message;
+            console.error(errorCode, errorMessage.value)
+        });
+}
+</script>
